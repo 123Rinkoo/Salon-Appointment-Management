@@ -19,11 +19,6 @@ const authRoutes = require('./routes/authRoutes');
 app.use('/auth', authRoutes);
 
 mongoose.connect(process.env.MONGO_URI, {
-    //create cluster--->connect--->copy connection string
-    //click cluster--->in left click database access---->database user section-->edit--->change password
-
-    //useNewUrlParser: true,  //mongoose uses parser to parse the mongodb string, this will ensure mongoose will use modern parser
-    //useUnifiedTopology: true, //topology engine manage connection between app and database, this will ensure, mongoose use updated topology engine
 }).then(() => console.log('MongoDB connected'))
     .catch((err) => console.error('MongoDB connection error:', err));
 

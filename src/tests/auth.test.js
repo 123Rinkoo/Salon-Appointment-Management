@@ -1,6 +1,3 @@
-// jest is the testing framework.
-// supertest is used for making HTTP requests in your test cases.
-// Use beforeAll and afterAll Hooks for Cleanup
 const request = require('supertest');
 const app = require('../app');
 const User = require('../models/User');
