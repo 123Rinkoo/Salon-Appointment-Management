@@ -9,7 +9,7 @@ const authenticate = async (req, res, next) => {
 
     const decoded = await verifyToken(token); 
     req.user = decoded; 
-    next();sss
+    next();
   } catch (error) {
     return res.status(401).json({ message: 'Invalid or expired token' });
   }

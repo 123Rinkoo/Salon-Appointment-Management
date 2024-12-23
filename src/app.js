@@ -15,8 +15,10 @@ app.use(rateLimit({
 }));
 
 const authRoutes = require('./routes/authRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
 
 app.use('/auth', authRoutes);
+app.use('/appointments', appointmentRoutes);
 
 mongoose.connect(process.env.MONGO_URI, {
 }).then(() => console.log('MongoDB connected'))
