@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --runInBand",
-    "start": "node src/app.js"
+    "start": "node src/server.js"
   },
   "keywords": [],
   "author": "",

@@ -20,7 +20,7 @@ describe('Appointment Endpoints', () => {
                 role: 'Customer',
             });
 
-        console.log(registerRes.body);  // Log register response to debug
+       
 
         expect(registerRes.statusCode).toEqual(201);
         expect(registerRes.body.message).toBe('User registered successfully');
@@ -33,7 +33,7 @@ describe('Appointment Endpoints', () => {
                 password: 'password123',
             });
 
-        console.log(loginRes.body);  // Log login response to debug
+    
 
         // Fix token extraction
         token = loginRes.body.token;
@@ -102,8 +102,7 @@ describe('Appointment Endpoints', () => {
                 time: '14:00',
             });
 
-        console.log(res.body);  // Log response for debugging
-
+    
         expect(res.statusCode).toEqual(201);
         expect(res.body.message).toBe('Appointment created successfully');
         expect(res.body.appointment).toHaveProperty('userId');
