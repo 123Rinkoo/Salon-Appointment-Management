@@ -116,13 +116,6 @@ describe('Appointment Endpoints', () => {
 
     it('should return 409 if the user already has an appointment at the same time', async () => {
 
-        const existingAppointment = new Appointment({
-            serviceId: serviceId,
-            date: '2024-12-25',
-            time: '14:00',
-        });
-        await existingAppointment.save();
-
         const res = await request(app)
             .post('/appointments')
             .set('Authorization', `Bearer ${token}`)
