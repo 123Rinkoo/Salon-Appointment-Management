@@ -166,9 +166,36 @@ exports.getAppointments = async (req, res) => {
         });
     } catch (error) {
         console.error('Error fetching appointments:', error.message); // More descriptive error logs
-        return res.status(500).json({ 
-            success: false, 
+        return res.status(500).json({
+            success: false,
             message: 'Server error while fetching appointments',
         });
+    }
+};
+
+exports.deleteAppointment = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: 'Invalid appointment ID' });
+        }
+
+        const appointment = await Appointment.findById(id);
+
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+
+        if (!checkAuthorization(req, appointment)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        await Appointment.deleteOne({ _id: id });
+
+        res.status(200).json({ message: 'Appointment deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting appointment:', error.message);
+        res.status(500).json({ message: 'An error occurred while deleting the appointment' });
     }
 };
