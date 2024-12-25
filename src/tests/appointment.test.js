@@ -9,6 +9,7 @@ describe('Appointment Endpoints', () => {
     let email;
     let appointmentId;
     let serviceId;
+    let otherUserToken;
 
     beforeAll(async () => {
         const registerRes = await request(app)
@@ -33,11 +34,31 @@ describe('Appointment Endpoints', () => {
                 password: 'password123',
             });
 
-    
-
         // Fix token extraction
         token = loginRes.body.token;
         email = 'test1@example.com';
+
+        // Register another user for permission checks
+        const otherRegisterRes = await request(app)
+            .post('/auth/register')
+            .send({
+                name: 'Other User',
+                email: 'other@example.com',
+                password: 'password123',
+                role: 'Customer',
+            });
+
+        expect(otherRegisterRes.statusCode).toEqual(201);
+
+        const otherLoginRes = await request(app)
+            .post('/auth/login')
+            .send({
+                email: 'other@example.com',
+                password: 'password123',
+            });
+
+        otherUserToken = otherLoginRes.body.token;
+
     });
 
 
@@ -127,6 +148,45 @@ describe('Appointment Endpoints', () => {
 
         expect(res.statusCode).toEqual(409);
         expect(res.body.message).toBe('You already have an appointment at this time');
+    });
+
+    it('should return 404 if appointment does not exist', async () => {
+        const res = await request(app)
+            .get('/appointments/666666666666666666666666')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(res.statusCode).toEqual(404);
+        expect(res.body.message).toBe('Appointment not found');
+    });
+
+    it('should return 400 if the appointment ID is invalid', async () => {
+        const res = await request(app)
+            .get('/appointments/invalid-id')
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(res.statusCode).toEqual(400);
+        expect(res.body.message).toBe('Invalid appointment ID');
+    });
+
+    it('should return the appointment if the user is the owner', async () => {
+        const res = await request(app)
+            .get(`/appointments/${appointmentId}`)
+            .set('Authorization', `Bearer ${token}`);
+
+        expect(res.statusCode).toEqual(200);
+        expect(res.body.success).toBe(true);
+        expect(res.body.data).toHaveProperty('userId');
+        expect(res.body.data.userId.email).toBe(email);
+        expect(res.body.data.serviceId).toHaveProperty('name');
+    });
+
+    it('should return 403 if the user is not the owner or an admin', async () => {
+        const res = await request(app)
+            .get(`/appointments/${appointmentId}`)
+            .set('Authorization', `Bearer ${otherUserToken}`);
+
+        expect(res.statusCode).toEqual(403);
+        expect(res.body.message).toBe('Access denied');
     });
 
     afterAll(async () => {
