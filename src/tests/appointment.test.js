@@ -282,25 +282,25 @@ describe('Appointment Endpoints', () => {
 
         it('should return paginated appointment data successfully', async () => {
             await request(app)
-            .post('/auth/register')
-            .send({
-                name: 'Admin User',
-                email: 'admin@example.com',
-                password: 'password123',
-                role: 'Admin',
-            });
+                .post('/auth/register')
+                .send({
+                    name: 'Admin User',
+                    email: 'admin@example.com',
+                    password: 'password123',
+                    role: 'Admin',
+                });
 
-        const adminLoginRes = await request(app)
-            .post('/auth/login')
-            .send({
-                email: 'admin@example.com',
-                password: 'password123',
-            });
+            const adminLoginRes = await request(app)
+                .post('/auth/login')
+                .send({
+                    email: 'admin@example.com',
+                    password: 'password123',
+                });
 
-        adminToken = adminLoginRes.body.token;
-        adminEmail = 'admin@example.com';
-       
-           
+            adminToken = adminLoginRes.body.token;
+            adminEmail = 'admin@example.com';
+
+
             const res = await request(app)
                 .get('/appointments?page=1&limit=2')
                 .set('Authorization', `Bearer ${adminToken}`);
@@ -338,6 +338,43 @@ describe('Appointment Endpoints', () => {
         });
     });
 
+    describe('Delete Appointment', () => {
+        it('should return 400 if the appointment ID is invalid', async () => {
+            const res = await request(app)
+                .delete('/appointments/invalidID')
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(res.statusCode).toEqual(400);
+            expect(res.body.message).toBe('Invalid appointment ID');
+        });
+
+        it('should return 404 if the appointment does not exist', async () => {
+            const res = await request(app)
+                .delete('/appointments/666666666666666666666666')
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(res.statusCode).toEqual(404);
+            expect(res.body.message).toBe('Appointment not found');
+        });
+
+        it('should delete the appointment successfully for authorized users', async () => {
+            const res = await request(app)
+                .delete(`/appointments/${appointmentId}`)
+                .set('Authorization', `Bearer ${token}`);
+
+            expect(res.statusCode).toEqual(200);
+            expect(res.body.message).toBe('Appointment deleted successfully');
+        });
+
+        it('should return 401 if the user is not authenticated', async () => {
+            const res = await request(app)
+                .delete(`/appointments/${appointmentId}`);
+
+            expect(res.statusCode).toEqual(403);
+            expect(res.body.message).toBe('Access denied, no token provided');
+        });
+    });
+
 
     afterAll(async () => {
         if (appointmentId) {
@@ -355,7 +392,7 @@ describe('Appointment Endpoints', () => {
         if (otherEmail) {
             await User.findOneAndDelete({ email: otherEmail });
         }
-        
+
         if (adminEmail) {
             await User.findOneAndDelete({ email: adminEmail });
         }
