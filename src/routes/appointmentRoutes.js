@@ -1,14 +1,17 @@
 const express = require('express');
-const { createAppointment , getAppointmentById} = require('../controllers/appointmentController');
+const { createAppointment, getAppointmentById, updateAppointment, getAppointments } = require('../controllers/appointmentController');
 const authenticate = require('../middlewares/authMiddleware.js');
 const rbacMiddleware = require('../middlewares/rbacMiddleware');
 const router = express.Router();
 
-router.use(authenticate); // This will verify the token for all routes below
+router.use(authenticate);
 
-// Create a new appointment 
 router.post('/', rbacMiddleware(['Customer']), createAppointment);
 
-router.get('/:id', rbacMiddleware(['Admin', 'Staff', 'Customer']), getAppointmentById);
+router.get('/:id', rbacMiddleware(['Admin', 'Customer']), getAppointmentById);
+
+router.put('/:id', rbacMiddleware(['Admin', 'Customer']), updateAppointment);
+
+router.get('/', rbacMiddleware(['Admin']), getAppointments);
 
 module.exports = router;
