@@ -1,16 +1,12 @@
-const { validationResult } = require('express-validator');
+const { appointmentUpdateSchema } = require('../utils/validation');
+const { checkAuthorization } = require('../utils/auth');
 const mongoose = require('mongoose');
 const Appointment = require('../models/Appointment');
 const Service = require('../models/Service');
 
+
 exports.createAppointment = async (req, res) => {
     try {
-        const errors = validationResult(req);
-
-        if (!errors.isEmpty()) {
-            return res.status(400).json({ errors: errors.array() });
-        }
-
         const { serviceId, date, time } = req.body;
         const userId = req.user?.id;
 
@@ -75,17 +71,14 @@ exports.getAppointmentById = async (req, res) => {
         const appointment = await Appointment.findById(id)
             .populate('userId', 'name email')
             .populate('serviceId', 'name price')
-            .select('-__v') 
+            .select('-__v')
             .exec();
 
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
         }
-
-        const isAdmin = req.user.role === 'Admin';
-        const isOwner = req.user.id === appointment.userId._id.toString();
-      
-        if (!isAdmin && !isOwner) {
+        
+        if (!checkAuthorization(req, appointment)) {
             return res.status(403).json({ message: 'Access denied' });
         }
 
@@ -99,5 +92,45 @@ exports.getAppointmentById = async (req, res) => {
             success: false,
             message: 'An unexpected error occurred. Please try again later.',
         });
+    }
+};
+
+exports.updateAppointment = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const { error } = appointmentUpdateSchema.validate(req.body);
+        if (error) {
+            return res.status(400).json({ message: `Validation Error: ${error.details[0].message}` });
+        }
+
+        const appointment = await Appointment.findById(id);
+        if (!appointment) {
+            return res.status(404).json({ message: 'Appointment not found' });
+        }
+
+        if (!checkAuthorization(req, appointment)) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        const updates = {
+            ...(req.body.serviceId && { serviceId: req.body.serviceId }),
+            ...(req.body.date && { date: req.body.date }),
+            ...(req.body.time && { time: req.body.time }),
+            ...(req.body.status && { status: req.body.status }),
+        };
+
+        const updatedAppointment = await Appointment.findByIdAndUpdate(id, updates, {
+            new: true, 
+            runValidators: true,
+        });
+
+        res.json({
+            message: 'Appointment updated successfully',
+            appointment: updatedAppointment,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error', error: error.message });
     }
 };
