@@ -1,3 +1,4 @@
+// const redisClient = require('../config/redis');
 const { appointmentUpdateSchema } = require('../utils/validation');
 const { checkAuthorization } = require('../utils/auth');
 const mongoose = require('mongoose');
@@ -26,7 +27,6 @@ exports.createAppointment = async (req, res) => {
 
         const existingAppointment = await Appointment.findOne({
             userId,
-            serviceId,
             date,
             time
         });
@@ -77,7 +77,7 @@ exports.getAppointmentById = async (req, res) => {
         if (!appointment) {
             return res.status(404).json({ message: 'Appointment not found' });
         }
-        
+
         if (!checkAuthorization(req, appointment)) {
             return res.status(403).json({ message: 'Access denied' });
         }
@@ -121,7 +121,7 @@ exports.updateAppointment = async (req, res) => {
         };
 
         const updatedAppointment = await Appointment.findByIdAndUpdate(id, updates, {
-            new: true, 
+            new: true,
             runValidators: true,
         });
 
@@ -132,5 +132,43 @@ exports.updateAppointment = async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+};
+
+exports.getAppointments = async (req, res) => {
+    const { page = 1, limit = 10 } = req.query; // Pagination parameters with default values
+
+    try {
+        // const cachedAppointments = await redisClient.get('appointments');
+        // if (cachedAppointments) {
+        //     return res.json({
+        //         success: true,
+        //         data: JSON.parse(cachedAppointments),
+        //         message: 'Data fetched from cache',
+        //     });
+        // }
+
+        const skip = (page - 1) * limit;
+        const appointments = await Appointment.find()
+            .skip(skip)
+            .limit(limit)
+            .populate('userId', 'name email')
+            .populate('serviceId', 'name price')
+            .exec();
+
+        // Cache the appointments data for the next request (expiration time set to 1 hour)
+        // await redisClient.setEx('appointments', 3600, JSON.stringify(appointments));
+
+        return res.status(200).json({
+            success: true,
+            data: appointments,
+            message: 'Data fetched from database',
+        });
+    } catch (error) {
+        console.error('Error fetching appointments:', error.message); // More descriptive error logs
+        return res.status(500).json({ 
+            success: false, 
+            message: 'Server error while fetching appointments',
+        });
     }
 };

@@ -244,7 +244,7 @@ describe('Appointment Endpoints', () => {
                     time: '15:00',
                     status: 'Confirmed',
                 });
-            console.log(res.body, ">>>>>>>>>>>>>>>>>>");
+           
             expect(res.statusCode).toEqual(200);
             expect(res.body.message).toBe('Appointment updated successfully');
             expect(res.body.appointment.date).toBe(new Date(tomorrow).toISOString().split('T')[0] + 'T00:00:00.000Z');
