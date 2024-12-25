@@ -11,6 +11,8 @@ describe('Appointment Endpoints', () => {
     let serviceId;
     let otherEmail;
     let otherUserToken;
+    let adminEmail;
+    let adminToken
     const today = new Date().toISOString().split('T')[0];
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -244,7 +246,7 @@ describe('Appointment Endpoints', () => {
                     time: '15:00',
                     status: 'Confirmed',
                 });
-           
+
             expect(res.statusCode).toEqual(200);
             expect(res.body.message).toBe('Appointment updated successfully');
             expect(res.body.appointment.date).toBe(new Date(tomorrow).toISOString().split('T')[0] + 'T00:00:00.000Z');
@@ -270,6 +272,72 @@ describe('Appointment Endpoints', () => {
 
     });
 
+    describe('Get Appointments', () => {
+        it('should return 401 if the user is not authenticated', async () => {
+            const res = await request(app).get('/appointments');
+
+            expect(res.statusCode).toEqual(403);
+            expect(res.body.message).toBe('Access denied, no token provided');
+        });
+
+        it('should return paginated appointment data successfully', async () => {
+            await request(app)
+            .post('/auth/register')
+            .send({
+                name: 'Admin User',
+                email: 'admin@example.com',
+                password: 'password123',
+                role: 'Admin',
+            });
+
+        const adminLoginRes = await request(app)
+            .post('/auth/login')
+            .send({
+                email: 'admin@example.com',
+                password: 'password123',
+            });
+
+        adminToken = adminLoginRes.body.token;
+        adminEmail = 'admin@example.com';
+       
+           
+            const res = await request(app)
+                .get('/appointments?page=1&limit=2')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(res.statusCode).toEqual(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.message).toBe('Data fetched from database');
+            expect(Array.isArray(res.body.data)).toBe(true);
+            expect(res.body.data.length).toBeLessThanOrEqual(2);
+        });
+
+        it('should handle invalid pagination parameters gracefully', async () => {
+            const res = await request(app)
+                .get('/appointments?page=-1&limit=-5')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(res.statusCode).toEqual(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data).toEqual([]);
+        });
+
+        it('should populate user and service details in the appointments', async () => {
+
+            const res = await request(app)
+                .get('/appointments')
+                .set('Authorization', `Bearer ${adminToken}`);
+
+            expect(res.statusCode).toEqual(200);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data[0]).toHaveProperty('userId');
+            expect(res.body.data[0]).toHaveProperty('serviceId');
+            expect(res.body.data[0]).toHaveProperty('date');
+            expect(res.body.data[0]).toHaveProperty('time');
+            expect(res.body.data[0]).toHaveProperty('status');
+        });
+    });
+
 
     afterAll(async () => {
         if (appointmentId) {
@@ -286,6 +354,10 @@ describe('Appointment Endpoints', () => {
 
         if (otherEmail) {
             await User.findOneAndDelete({ email: otherEmail });
+        }
+        
+        if (adminEmail) {
+            await User.findOneAndDelete({ email: adminEmail });
         }
     });
 });
