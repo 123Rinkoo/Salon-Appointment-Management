@@ -3,6 +3,7 @@ const app = require('../app');
 const Appointment = require('../models/Appointment');
 const Service = require('../models/Service');
 const User = require('../models/User');
+const redis = require('../config/redis');
 
 describe('Appointment Endpoints', () => {
     let token;
@@ -273,6 +274,9 @@ describe('Appointment Endpoints', () => {
     });
 
     describe('Get Appointments', () => {
+        beforeAll(async () => {
+            await redis.flushDb();  // Clears the cach
+        });
         it('should return 401 if the user is not authenticated', async () => {
             const res = await request(app).get('/appointments');
 
@@ -280,7 +284,7 @@ describe('Appointment Endpoints', () => {
             expect(res.body.message).toBe('Access denied, no token provided');
         });
 
-        it('should return paginated appointment data successfully', async () => {
+        it('should return paginated appointment data successfully from the database', async () => {
             await request(app)
                 .post('/auth/register')
                 .send({
@@ -310,6 +314,13 @@ describe('Appointment Endpoints', () => {
             expect(res.body.message).toBe('Data fetched from database');
             expect(Array.isArray(res.body.data)).toBe(true);
             expect(res.body.data.length).toBeLessThanOrEqual(2);
+        });
+        it('should return appointment data from the cache', async () => {
+            const res = await request(app)
+                .get('/appointments?page=1&limit=2')
+                .set('Authorization', `Bearer ${adminToken}`);
+            expect(res.statusCode).toEqual(200);
+            expect(res.body.message).toBe('Data fetched from cache');
         });
 
         it('should handle invalid pagination parameters gracefully', async () => {
