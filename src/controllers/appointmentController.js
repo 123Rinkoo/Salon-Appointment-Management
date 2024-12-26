@@ -1,4 +1,4 @@
-// const redisClient = require('../config/redis');
+const redisClient = require('../config/redis');
 const { appointmentUpdateSchema } = require('../utils/validation');
 const { checkAuthorization } = require('../utils/auth');
 const mongoose = require('mongoose');
@@ -139,14 +139,15 @@ exports.getAppointments = async (req, res) => {
     const { page = 1, limit = 10 } = req.query; // Pagination parameters with default values
 
     try {
-        // const cachedAppointments = await redisClient.get('appointments');
-        // if (cachedAppointments) {
-        //     return res.json({
-        //         success: true,
-        //         data: JSON.parse(cachedAppointments),
-        //         message: 'Data fetched from cache',
-        //     });
-        // }
+        const cachedAppointments = await redisClient.get('appointments');
+        if (cachedAppointments) {
+            console.log('Data fetched from cache');
+            return res.json({
+                success: true,
+                data: JSON.parse(cachedAppointments),
+                message: 'Data fetched from cache',
+            });
+        }
 
         const skip = (page - 1) * limit;
         const appointments = await Appointment.find()
@@ -157,7 +158,7 @@ exports.getAppointments = async (req, res) => {
             .exec();
 
         // Cache the appointments data for the next request (expiration time set to 1 hour)
-        // await redisClient.setEx('appointments', 3600, JSON.stringify(appointments));
+        await redisClient.setEx('appointments', 3600, JSON.stringify(appointments));
 
         return res.status(200).json({
             success: true,

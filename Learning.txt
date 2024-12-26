@@ -1,10 +1,13 @@
-//create cluster--->connect--->copy connection string
-//click cluster--->in left click database access---->database user section-->edit--->change password
+create cluster--->connect--->copy connection string
+click cluster--->in left click database access---->database user section-->edit--->change password
 
-//useNewUrlParser: true,  //mongoose uses parser to parse the mongodb string, this will ensure mongoose will use modern parser
-//useUnifiedTopology: true, //topology engine manage connection between app and database, this will ensure, mongoose use updated topology engine
+useNewUrlParser: true,  //mongoose uses parser to parse the mongodb string, this will ensure mongoose will use modern parser
+useUnifiedTopology: true, //topology engine manage connection between app and database, this will ensure, mongoose use updated topology engine
 
-//mocha is the test runner jo test cases run krte hai, lekin isme results check krne k lie assert library(Chai) chahiye hoti hai.
-// jest is the testing framework. isme (test runner + assertion library) dono hoti hai.
-// supertest is used for making HTTP requests in your test cases.
-// Use beforeAll and afterAll Hooks for Cleanup
+mocha is the test runner jo test cases run krte hai, lekin isme results check krne k lie assert library(Chai) chahiye hoti hai.
+jest is the testing framework. isme (test runner + assertion library) dono hoti hai.
+supertest is used for making HTTP requests in your test cases.
+Use beforeAll and afterAll Hooks for Cleanup
+
+redis download link
+https://github.com/microsoftarchive/redis/releases
