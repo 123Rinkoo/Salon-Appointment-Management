@@ -1,9 +1,11 @@
 const redisClient = require('../config/redis');
 const { appointmentUpdateSchema } = require('../utils/validation');
 const { checkAuthorization } = require('../utils/auth');
+const { sendAppointmentEmail } = require('../config/notification');
 const mongoose = require('mongoose');
 const Appointment = require('../models/Appointment');
 const Service = require('../models/Service');
+const User = require('../models/User');
 
 
 exports.createAppointment = async (req, res) => {
@@ -44,6 +46,10 @@ exports.createAppointment = async (req, res) => {
         });
 
         await appointment.save();
+  
+        const user = await User.findOne({ _id: req.user.id });
+
+        await sendAppointmentEmail(user.email, service.name, date, time);
 
         res.status(201).json({
             message: 'Appointment created successfully',
@@ -52,7 +58,6 @@ exports.createAppointment = async (req, res) => {
     } catch (error) {
         console.error('Error creating appointment:', error.message);
 
-        // Specific error handling for database or unexpected issues
         if (error.name === 'ValidationError') {
             return res.status(400).json({ message: 'Invalid data', details: error.errors });
         }
