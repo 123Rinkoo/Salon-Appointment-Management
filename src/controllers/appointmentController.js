@@ -139,7 +139,7 @@ exports.getAppointments = async (req, res) => {
     const { page = 1, limit = 10 } = req.query; // Pagination parameters with default values
 
     try {
-        const cachedAppointments = await redisClient.get('appointments');
+        const cachedAppointments = await redisClient.get(`appointments:${page}:${limit}`);
         if (cachedAppointments) {
             console.log('Data fetched from cache');
             return res.json({
@@ -157,8 +157,7 @@ exports.getAppointments = async (req, res) => {
             .populate('serviceId', 'name price')
             .exec();
 
-        // Cache the appointments data for the next request (expiration time set to 1 hour)
-        await redisClient.setEx('appointments', 3600, JSON.stringify(appointments));
+        await redisClient.setEx(`appointments:${page}:${limit}`, 3600, JSON.stringify(appointments));
 
         return res.status(200).json({
             success: true,
